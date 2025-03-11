@@ -22,3 +22,4 @@ streamlit
 tiktoken
 watchdog
 duckduckgo-search
+streamlit
