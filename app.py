@@ -9,18 +9,14 @@ from langchain.memory import ConversationBufferMemory
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Get the Groq API key from the environment variables
-if "GROQ_API_KEY" in st.secrets:
-    api_key = st.secrets["GROQ_API_KEY"]
-else:
-    api_key = os.getenv("GROQ_API_KEY")
+# Secrets/config
+api_key = os.getenv("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY", None)
 
 if api_key is None:
     st.error("Groq API key not found. Please set the GROQ_API_KEY environment variable.")
-    st.stop()  # Stop execution if the API key is missing
+    st.stop()
 
 ## Tools
 wikiWrapperAPI = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=250)
@@ -31,15 +27,28 @@ arxiv = ArxivQueryRun(api_wrapper = arxivAPIWrapper)
 
 search = DuckDuckGoSearchAPIWrapper()
 
-# Create a custom tool for the search wrapper.
 search_tool = Tool(
     name="Search",
     func=search.run,
     description="useful for when you need to answer questions about current events"
 )
 
-## Streamlit Application
 st.title("🔎 Langchain - Chat with Search")
+
+default_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+available_models = list({
+    default_model: None,
+    "llama-3.1-8b-instant": None,
+    "llama-3.1-70b-versatile": None,
+    "mixtral-8x7b-32768": None,
+}.keys())
+
+selected_model = st.sidebar.selectbox(
+    "Groq model",
+    options=available_models,
+    index=0,
+    help="Override the GROQ_MODEL env var at runtime",
+)
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [
@@ -58,10 +67,9 @@ if prompt := st.chat_input(placeholder="What is Machine Learning?"):
     with st.chat_message("user"):
         st.write(prompt)
 
-    llm = ChatGroq(groq_api_key=api_key, model_name="Llama3-8b-8192", streaming=True)
+    llm = ChatGroq(groq_api_key=api_key, model_name=selected_model, streaming=True)
     tools = [search_tool, wiki, arxiv]
 
-    # Use AgentType.CONVERSATIONAL_REACT_DESCRIPTION
     agent_chain = initialize_agent(
         tools,
         llm,

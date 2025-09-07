@@ -1,2 +1,4 @@
 /search_engine_evn
 .env
+.DS_Store
+.ipynb_checkpoints/
