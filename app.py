@@ -39,8 +39,6 @@ default_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 available_models = list({
     default_model: None,
     "llama-3.1-8b-instant": None,
-    "llama-3.1-70b-versatile": None,
-    "mixtral-8x7b-32768": None,
 }.keys())
 
 selected_model = st.sidebar.selectbox(
